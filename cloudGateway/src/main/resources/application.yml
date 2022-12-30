@@ -1,0 +1,51 @@
+spring:
+  application:
+    name: GATEWAY-SERVICE
+  cloud:
+    gateway:
+      routes:
+        - id: demand-service
+          uri: lb://DEMAND-SERVICE
+          predicates:
+            - Path=/demand/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: demand-service
+                fallbackuri: forward:/demandFallBack
+        - id: delivery-service
+          uri: lb://DELIVERY-SERVICE
+          predicates:
+            - Path=/delivery/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: delivery-service
+                fallbackuri: forward:/deliveryFallback
+                
+
+server:
+  port: 8989
+  
+management:
+  endpoints:
+    web:
+      exposure:
+        include: hystrix.stream
+
+hystrix:
+  command:
+    fallbackcmd:
+      execution:
+        isolation:
+          thread:
+            timeoutInMilliseconds: 5000  
+
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    hostname: localhost
